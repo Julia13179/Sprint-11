@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Pytest
+.pytest_cache/
+
+.venv
+
+# Allure results
+allure-results/
+
+# HTML files
+*.html
+*_files/
