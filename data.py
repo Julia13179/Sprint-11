@@ -20,3 +20,6 @@ pancakes_data_edit = {
 }
 
 img_path = Path(__file__).parent / "assets" / "pancakes.jpg"
+
+EMAIL_ALREADY_USED_MESSAGE = "Почта уже используется"
+ANNOUNCEMENT_DELETED_MESSAGE = "Объявление удалено успешно"

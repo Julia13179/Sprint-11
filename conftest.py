@@ -10,7 +10,7 @@ from helpers import (
     generate_random_string,
     build_user_payload,
 )
-from service import site, IMG_FALLBACK_URL
+from service import SIGNUP_URL, SIGNIN_URL, CREATE_LISTING_URL, IMG_FALLBACK_URL
 from data import img_path as IMG_PATH, pancakes_data
 
 
@@ -29,17 +29,18 @@ def user_data(unique_valid_email):
 
 @pytest.fixture
 def signup_signin_user(user_data):
-    requests.post(site.signup, json=user_data)
+    requests.post(SIGNUP_URL, json=user_data)
 
     login_data = {
         "email": user_data["email"],
         "password": user_data["password"]
     }
-    signin_response = requests.post(site.signin, json=login_data)
+    signin_response = requests.post(SIGNIN_URL, json=login_data)
     body = signin_response.json()
 
     token = body.get("token", {}).get("access_token")
-    assert token
+    if not token:
+        raise ValueError("Token not received during signin")
     return { 
         "Authorization": f"Bearer {token}",
         "Accept": "application/json"
@@ -51,7 +52,8 @@ def get_id_create_announcement(signup_signin_user):
         files = image_file(IMG_PATH, fallback_url=IMG_FALLBACK_URL)
 
         with allure.step("Создаем объявление"):
-            ann_response = requests.post(site.create_listing, data=pancakes_data, headers=headers, files=files)
+            ann_response = requests.post(CREATE_LISTING_URL, data=pancakes_data, headers=headers, files=files)
 
-        assert ann_response.status_code == 201
+        if ann_response.status_code != 201:
+            raise ValueError(f"Failed to create announcement: {ann_response.status_code}")
         return ann_response.json()["id"]

@@ -1,7 +1,8 @@
 import allure, pytest
 import requests
 
-from service import site
+from service import SIGNUP_URL, SIGNIN_URL
+from data import EMAIL_ALREADY_USED_MESSAGE
 
 
 @allure.epic("Создание пользователя")
@@ -12,18 +13,22 @@ class TestRegisterUser:
     @allure.title("Успешное создание уникального пользователя")
     def test_success_signup_user(self, user_data):
         with allure.step("Регистрация пользователя"):
-            response = requests.post(site.signup, data=user_data)
+            response = requests.post(SIGNUP_URL, data=user_data)
 
         assert response.status_code == 201
+        body = response.json()
+        assert body
 
     @allure.title("Создание существующего пользователя")
     def test_signup_user_already_exist(self, user_data):
         with allure.step("Регистрация пользователя"):
-            response = requests.post(site.signup, data=user_data)
+            response = requests.post(SIGNUP_URL, data=user_data)
         with allure.step("Регистрация существующего пользователя"):
-            response_exist = requests.post(site.signup, data=user_data)
+            response_exist = requests.post(SIGNUP_URL, data=user_data)
 
-        assert response_exist.status_code == 400 and response_exist.json().get("message") == 'Почта уже используется'
+        assert response_exist.status_code == 400
+        body = response_exist.json()
+        assert body.get("message") == EMAIL_ALREADY_USED_MESSAGE
 
 
 @allure.epic("Авторизация пользователя")
@@ -33,7 +38,7 @@ class TestLoginUser:
     @allure.title("Успешная авторизация пользователя")
     def test_success_signin_user(self, user_data):
         with allure.step("Регистрация пользователя"):
-            signup_response = requests.post(site.signup, data=user_data)
+            signup_response = requests.post(SIGNUP_URL, data=user_data)
 
         signin_data = {
             "email": user_data["email"],
@@ -41,9 +46,9 @@ class TestLoginUser:
         }
 
         with allure.step("Авторизация пользователя"):
-            response = requests.post(site.signin, json=signin_data)
+            response = requests.post(SIGNIN_URL, json=signin_data)
         
+        assert response.status_code == 201
         body = response.json()
         token = body.get("token", {}).get("access_token")
-
-        assert response.status_code == 201 and token
+        assert token is not None

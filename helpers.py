@@ -36,6 +36,3 @@ def build_user_payload(email, password, name):
 def generate_valid_unique_email(domain='yandexpr.ru'):
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     return f"testuser_{timestamp}@{domain}"
-
-def generate_invalid_unique_email(length=8):
-    return ''.join(random.choices(string.ascii_lowercase, k=length))
