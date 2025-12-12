@@ -1,0 +1,57 @@
+import allure
+import pytest
+import requests
+
+
+from helpers import (
+    headers_for_multipart,
+    image_file,
+    generate_valid_unique_email,
+    generate_random_string,
+    build_user_payload,
+)
+from service import site, IMG_FALLBACK_URL
+from data import img_path as IMG_PATH, pancakes_data
+
+
+    
+@pytest.fixture
+def unique_valid_email():
+    return generate_valid_unique_email()
+
+@pytest.fixture
+def user_data(unique_valid_email):
+    email = unique_valid_email
+    password = generate_random_string(10)
+    submitPassword = password
+    payload = build_user_payload(email, password, submitPassword)
+    return payload
+
+@pytest.fixture
+def signup_signin_user(user_data):
+    requests.post(site.signup, json=user_data)
+
+    login_data = {
+        "email": user_data["email"],
+        "password": user_data["password"]
+    }
+    signin_response = requests.post(site.signin, json=login_data)
+    body = signin_response.json()
+
+    token = body.get("token", {}).get("access_token")
+    assert token
+    return { 
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json"
+    }
+    
+@pytest.fixture
+def get_id_create_announcement(signup_signin_user):
+        headers = headers_for_multipart(signup_signin_user)
+        files = image_file(IMG_PATH, fallback_url=IMG_FALLBACK_URL)
+
+        with allure.step("Создаем объявление"):
+            ann_response = requests.post(site.create_listing, data=pancakes_data, headers=headers, files=files)
+
+        assert ann_response.status_code == 201
+        return ann_response.json()["id"]
